@@ -4,6 +4,7 @@ using UnityEngine;
 namespace JudgmentOfTheFallenWing.Enemies
 {
     [RequireComponent(typeof(Rigidbody2D))]
+    [RequireComponent(typeof(EnemyHealthBar))]
     public class EnemyBase : MonoBehaviour, IDamageable
     {
         [SerializeField] protected float maxHealth = 30f;
@@ -15,16 +16,21 @@ namespace JudgmentOfTheFallenWing.Enemies
 
         protected Rigidbody2D _rb;
         protected Transform Player;
-        protected float CurrentHealth;
+        protected float _currentHealth;
         protected int PatrolIndex;
         protected bool IsAttacking;
 
-        public bool IsAlive => CurrentHealth > 0f;
+        private EnemyHealthBar _healthBar;
+
+        public bool IsAlive => _currentHealth > 0f;
+        public float MaxHealth => maxHealth;
+        public float CurrentHealth => _currentHealth;
 
         protected virtual void Awake()
         {
             _rb = GetComponent<Rigidbody2D>();
-            CurrentHealth = maxHealth;
+            _healthBar = GetComponent<EnemyHealthBar>();
+            _currentHealth = maxHealth;
         }
 
         protected virtual void Start()
@@ -32,6 +38,8 @@ namespace JudgmentOfTheFallenWing.Enemies
             var playerObj = GameObject.FindGameObjectWithTag("Player");
             if (playerObj != null)
                 Player = playerObj.transform;
+
+            RefreshHealthBar();
         }
 
         protected virtual void Update()
@@ -88,14 +96,21 @@ namespace JudgmentOfTheFallenWing.Enemies
         {
             if (!IsAlive) return;
 
-            CurrentHealth -= damage.Amount;
+            _currentHealth = Mathf.Max(0f, _currentHealth - damage.Amount);
+            RefreshHealthBar();
 
-            if (CurrentHealth <= 0f)
+            if (_currentHealth <= 0f)
                 Die();
+        }
+
+        protected void RefreshHealthBar()
+        {
+            _healthBar?.UpdateBar(_currentHealth, maxHealth);
         }
 
         protected virtual void Die()
         {
+            _healthBar?.Hide();
             Destroy(gameObject, 0.1f);
         }
     }
