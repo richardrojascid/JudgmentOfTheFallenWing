@@ -1,12 +1,12 @@
 :root {
-    --color-bg: #1a1008;
-    --color-surface: #2a1a0e;
-    --color-surface-2: #3d2818;
-    --color-primary: #c8860a;
-    --color-primary-dark: #a06d08;
-    --color-accent: #e8b84a;
-    --color-text: #f5ebe0;
-    --color-text-muted: #b8a690;
+    --color-bg: #0a1628;
+    --color-surface: #12203a;
+    --color-surface-2: #1a2d4d;
+    --color-primary: #c9a227;
+    --color-primary-dark: #a8861f;
+    --color-accent: #e8c84a;
+    --color-text: #f0ebe3;
+    --color-text-muted: #a8b4c4;
     --color-danger: #d64545;
     --color-success: #4caf7a;
     --color-border: rgba(232, 184, 74, 0.2);
@@ -66,8 +66,22 @@ body {
 
 .header-top h1 {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     color: var(--color-accent);
+    line-height: 1.2;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.header-actions a.btn-icon {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .order-meta {
@@ -673,3 +687,300 @@ body {
     padding: 48px;
     color: var(--color-text-muted);
 }
+
+.size-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.size-btn {
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.size-btn.active {
+    background: var(--color-primary);
+    color: #0a1628;
+    border-color: var(--color-primary);
+    font-weight: 600;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+/* Login */
+.login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+    padding: 20px;
+    padding-bottom: 20px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 360px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+}
+
+.login-brand {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.login-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.login-brand h1 {
+    margin: 0 0 4px;
+    font-size: 1.25rem;
+    color: var(--color-accent);
+}
+
+.login-brand p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+.pin-form input {
+    width: 100%;
+    padding: 14px;
+    text-align: center;
+    font-size: 1.25rem;
+    letter-spacing: 0.3em;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    margin-bottom: 12px;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+.pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.pin-key {
+    height: 56px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.pin-key.empty {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.install-form .form-group {
+    margin-bottom: 16px;
+}
+
+/* Admin */
+.admin-page {
+    padding-bottom: 40px;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    flex-wrap: wrap;
+}
+
+.admin-header h1 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--color-accent);
+}
+
+.admin-header p {
+    margin: 4px 0 0;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.admin-main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    display: grid;
+    gap: 24px;
+}
+
+.admin-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 20px;
+}
+
+.admin-section h2 {
+    margin: 0 0 16px;
+    font-size: 1.1rem;
+}
+
+.admin-section h3 {
+    margin: 16px 0 8px;
+    font-size: 0.95rem;
+}
+
+.admin-form {
+    margin-bottom: 16px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.section-header h2 {
+    margin: 0;
+}
+
+.admin-menu-list {
+    display: grid;
+    gap: 16px;
+}
+
+.admin-category {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.admin-category.inactive {
+    opacity: 0.6;
+}
+
+.admin-category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--color-surface-2);
+    flex-wrap: wrap;
+}
+
+.admin-category-header h3 {
+    margin: 0 0 4px;
+    font-size: 1rem;
+}
+
+.badge {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.admin-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.admin-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--color-border);
+    flex-wrap: wrap;
+}
+
+.admin-item.inactive {
+    opacity: 0.55;
+}
+
+.admin-item strong {
+    display: block;
+}
+
+.admin-item span {
+    color: var(--color-accent);
+    font-size: 0.875rem;
+}
+
+.admin-item p {
+    margin: 4px 0 0;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.admin-item-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.admin-danger-zone {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+}
+
+.admin-danger-zone p {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin: 0 0 12px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 500px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+

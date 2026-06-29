@@ -1,17 +1,28 @@
 <?php
 declare(strict_types=1);
+
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/Database.php';
 
 $message = '';
 $error = '';
+$defaultPin = '1234';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        Database::initialize();
-        $message = '¡Instalación completada! Ya puedes usar la aplicación.';
-    } catch (Throwable $e) {
-        $error = 'Error durante la instalación. Verifica permisos de escritura en /data';
+    $pin = trim($_POST['pin'] ?? '');
+    $pinConfirm = trim($_POST['pin_confirm'] ?? '');
+
+    if (!preg_match('/^\d{4,8}$/', $pin)) {
+        $error = 'El PIN debe tener entre 4 y 8 dígitos numéricos.';
+    } elseif ($pin !== $pinConfirm) {
+        $error = 'Los PIN no coinciden.';
+    } else {
+        try {
+            Database::install($pin);
+            $message = '¡Instalación completada! Carta Artemisa 2026 cargada. Usa tu PIN para entrar.';
+        } catch (Throwable $e) {
+            $error = 'Error durante la instalación. Verifica permisos de escritura en /data';
+        }
     }
 }
 
@@ -28,20 +39,30 @@ $installed = file_exists(DB_PATH);
 <body class="install-page">
     <main class="install-card">
         <h1>Instalación</h1>
-        <p>Configura la base de datos y el menú de ejemplo para <strong><?= htmlspecialchars(APP_NAME) ?></strong>.</p>
+        <p>Configura <strong><?= htmlspecialchars(APP_NAME) ?></strong> con la carta 2026 y un PIN de acceso para el personal.</p>
 
         <?php if ($message): ?>
             <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
-            <a href="index.php" class="btn btn-primary">Ir a la aplicación</a>
+            <a href="login.php" class="btn btn-primary">Ir al acceso</a>
         <?php elseif ($installed): ?>
             <div class="alert alert-info">La aplicación ya está instalada.</div>
-            <a href="index.php" class="btn btn-primary">Ir a la aplicación</a>
+            <a href="login.php" class="btn btn-primary">Ir al acceso</a>
         <?php else: ?>
             <?php if ($error): ?>
                 <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
             <?php endif; ?>
-            <form method="post">
-                <button type="submit" class="btn btn-primary">Instalar base de datos y menú</button>
+            <form method="post" class="install-form">
+                <div class="form-group">
+                    <label for="pin">PIN de acceso (4-8 dígitos)</label>
+                    <input type="password" id="pin" name="pin" inputmode="numeric" pattern="[0-9]{4,8}"
+                           maxlength="8" value="<?= htmlspecialchars($defaultPin) ?>" required>
+                </div>
+                <div class="form-group">
+                    <label for="pin_confirm">Confirmar PIN</label>
+                    <input type="password" id="pin_confirm" name="pin_confirm" inputmode="numeric"
+                           maxlength="8" value="<?= htmlspecialchars($defaultPin) ?>" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Instalar carta y crear PIN</button>
             </form>
         <?php endif; ?>
 

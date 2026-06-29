@@ -1,18 +1,18 @@
 /**
- * Café Comanda — Aplicación para meseros
+ * Artemisa Salón de Té — Aplicación para meseros
  */
 (() => {
-    const STORAGE_KEY = 'cafe_comanda_settings';
-    const CART_KEY = 'cafe_comanda_cart';
+    const STORAGE_KEY = 'artemisa_comanda_settings';
+    const CART_KEY = 'artemisa_comanda_cart';
 
     let menu = [];
     let cart = [];
     let currentItem = null;
     let editingCartIndex = -1;
     let selectedCategoryId = null;
+    let selectedSize = 'simple';
 
     const $ = (sel) => document.querySelector(sel);
-    const $$ = (sel) => document.querySelectorAll(sel);
 
     const els = {
         categoryTabs: $('#categoryTabs'),
@@ -34,6 +34,8 @@
         modalItemName: $('#modalItemName'),
         modalItemDesc: $('#modalItemDesc'),
         modalItemPrice: $('#modalItemPrice'),
+        sizeGroup: $('#sizeGroup'),
+        sizeToggle: $('#sizeToggle'),
         itemQuantity: $('#itemQuantity'),
         qtyMinus: $('#qtyMinus'),
         qtyPlus: $('#qtyPlus'),
@@ -48,11 +50,12 @@
         settingsModal: $('#settingsModal'),
         btnSettings: $('#btnSettings'),
         settingsClose: $('#settingsClose'),
-        cafeName: $('#cafeName'),
         printerMode: $('#printerMode'),
         btnConnectPrinter: $('#btnConnectPrinter'),
         printerStatus: $('#printerStatus'),
     };
+
+    const fetchOpts = { credentials: 'same-origin' };
 
     function loadSettings() {
         try {
@@ -79,7 +82,7 @@
     }
 
     function formatMoney(amount) {
-        return '$' + Number(amount).toFixed(2);
+        return '$' + Math.round(Number(amount)).toLocaleString('es-CL');
     }
 
     function getCartTotal() {
@@ -88,6 +91,20 @@
 
     function getCartCount() {
         return cart.reduce((sum, item) => sum + item.quantity, 0);
+    }
+
+    function getUnitPrice(item, size = 'simple') {
+        if (size === 'doble' && item.price_double != null) {
+            return item.price_double;
+        }
+        return item.price;
+    }
+
+    function formatItemPrice(item) {
+        if (item.price_double != null) {
+            return `${formatMoney(item.price)} / ${formatMoney(item.price_double)}`;
+        }
+        return formatMoney(item.price);
     }
 
     function showToast(message, type = 'success') {
@@ -105,11 +122,20 @@
         }, 3000);
     }
 
+    async function apiFetch(url, options = {}) {
+        const res = await fetch(url, { ...fetchOpts, ...options });
+        if (res.status === 401) {
+            window.location.href = 'login.php';
+            throw new Error('Sesión expirada');
+        }
+        return res;
+    }
+
     async function loadMenu() {
         els.menuGrid.innerHTML = '<p class="loading">Cargando carta...</p>';
 
         try {
-            const res = await fetch('api/menu.php');
+            const res = await apiFetch('api/menu.php');
             const data = await res.json();
 
             if (!data.success) {
@@ -150,10 +176,10 @@
 
         els.menuGrid.innerHTML = category.items.map(item => `
             <article class="menu-card" data-item-id="${item.id}" tabindex="0" role="button"
-                     aria-label="${escapeHtml(item.name)} ${formatMoney(item.price)}">
+                     aria-label="${escapeHtml(item.name)} ${formatItemPrice(item)}">
                 <h3>${escapeHtml(item.name)}</h3>
                 ${item.description ? `<p class="description">${escapeHtml(item.description)}</p>` : ''}
-                <p class="price">${formatMoney(item.price)}</p>
+                <p class="price">${formatItemPrice(item)}</p>
             </article>
         `).join('');
 
@@ -177,6 +203,29 @@
         return null;
     }
 
+    function renderSizeSelector(size = 'simple') {
+        selectedSize = size;
+        if (!currentItem?.price_double) {
+            els.sizeGroup.hidden = true;
+            return;
+        }
+
+        els.sizeGroup.hidden = false;
+        els.sizeToggle.querySelectorAll('.size-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.size === size);
+            btn.onclick = () => {
+                selectedSize = btn.dataset.size;
+                renderSizeSelector(selectedSize);
+                updateModalTotal();
+            };
+        });
+
+        const simplePrice = getUnitPrice(currentItem, 'simple');
+        const doblePrice = getUnitPrice(currentItem, 'doble');
+        $('#sizeSimple').textContent = `Simple ${formatMoney(simplePrice)}`;
+        $('#sizeDoble').textContent = `Doble ${formatMoney(doblePrice)}`;
+    }
+
     function openItemModal(itemId, cartIndex = -1) {
         const item = findMenuItem(itemId);
         if (!item) return;
@@ -186,17 +235,19 @@
 
         els.modalItemName.textContent = item.name;
         els.modalItemDesc.textContent = item.description || '';
-        els.modalItemPrice.textContent = formatMoney(item.price);
+        els.modalItemPrice.textContent = formatItemPrice(item);
 
         if (cartIndex >= 0) {
             const cartItem = cart[cartIndex];
             els.itemQuantity.value = cartItem.quantity;
             els.itemNotes.value = cartItem.notes || '';
+            renderSizeSelector(cartItem.size || 'simple');
             renderIngredients(cartItem.removed_ingredients);
             renderExtras(cartItem.added_extras.map(e => e.id || e.name));
         } else {
             els.itemQuantity.value = 1;
             els.itemNotes.value = '';
+            renderSizeSelector('simple');
             renderIngredients([]);
             renderExtras([]);
         }
@@ -225,7 +276,6 @@
         els.ingredientsList.querySelectorAll('.chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 chip.classList.toggle('selected');
-                updateModalTotal();
             });
         });
     }
@@ -238,12 +288,14 @@
         }
 
         els.extrasGroup.hidden = false;
+        const hasVariants = currentItem.extras.some(e => e.price === 0);
+
         els.extrasList.innerHTML = currentItem.extras.map(extra => {
             const isSelected = selectedExtras.includes(extra.id) || selectedExtras.includes(extra.name);
             const priceLabel = extra.price > 0 ? ` <span class="chip-price">+${formatMoney(extra.price)}</span>` : '';
             return `
                 <button type="button" class="chip ${isSelected ? 'extra-selected' : ''}"
-                        data-extra-id="${extra.id}">
+                        data-extra-id="${extra.id}" data-variant="${extra.price === 0 ? '1' : '0'}">
                     ${escapeHtml(extra.name)}${priceLabel}
                 </button>
             `;
@@ -251,10 +303,21 @@
 
         els.extrasList.querySelectorAll('.chip').forEach(chip => {
             chip.addEventListener('click', () => {
+                if (chip.dataset.variant === '1') {
+                    els.extrasList.querySelectorAll('.chip[data-variant="1"]').forEach(c => {
+                        if (c !== chip) c.classList.remove('extra-selected');
+                    });
+                }
                 chip.classList.toggle('extra-selected');
                 updateModalTotal();
             });
         });
+
+        if (hasVariants) {
+            els.extrasGroup.querySelector('h3').textContent = 'Opciones / agregados';
+        } else {
+            els.extrasGroup.querySelector('h3').textContent = 'Agregados';
+        }
     }
 
     function getSelectedRemoved() {
@@ -272,13 +335,21 @@
         return selected;
     }
 
+    function buildItemName(baseName) {
+        if (currentItem.price_double != null) {
+            return baseName + (selectedSize === 'doble' ? ' (Doble)' : ' (Simple)');
+        }
+        return baseName;
+    }
+
     function updateModalTotal() {
         if (!currentItem) return;
 
         const qty = Math.max(1, parseInt(els.itemQuantity.value, 10) || 1);
+        const unitPrice = getUnitPrice(currentItem, selectedSize);
         const extras = getSelectedExtras();
         const extrasTotal = extras.reduce((s, e) => s + e.price, 0);
-        const lineTotal = (currentItem.price + extrasTotal) * qty;
+        const lineTotal = (unitPrice + extrasTotal) * qty;
 
         els.modalLineTotal.textContent = formatMoney(lineTotal);
     }
@@ -287,16 +358,18 @@
         const qty = Math.max(1, parseInt(els.itemQuantity.value, 10) || 1);
         const removed = getSelectedRemoved();
         const extras = getSelectedExtras();
+        const unitPrice = getUnitPrice(currentItem, selectedSize);
         const extrasTotal = extras.reduce((s, e) => s + e.price, 0);
         const notes = els.itemNotes.value.trim();
 
         const cartItem = {
             menu_item_id: currentItem.id,
-            item_name: currentItem.name,
-            unit_price: currentItem.price,
+            item_name: buildItemName(currentItem.name),
+            unit_price: unitPrice,
+            size: selectedSize,
             quantity: qty,
             extras_total: extrasTotal,
-            line_total: (currentItem.price + extrasTotal) * qty,
+            line_total: (unitPrice + extrasTotal) * qty,
             removed_ingredients: removed,
             added_extras: extras.map(e => ({ id: e.id, name: e.name, price: e.price })),
             notes,
@@ -330,14 +403,14 @@
 
         els.cartItems.innerHTML = cart.map((item, index) => {
             let details = [];
-            if (item.removed_ingredients?.length) {
-                details.push('Sin: ' + item.removed_ingredients.join(', '));
-            }
             if (item.added_extras?.length) {
                 details.push('Extras: ' + item.added_extras.map(e => {
                     const p = e.price > 0 ? ` (+${formatMoney(e.price)})` : '';
                     return e.name + p;
                 }).join(', '));
+            }
+            if (item.removed_ingredients?.length) {
+                details.push('Sin: ' + item.removed_ingredients.join(', '));
             }
             if (item.notes) details.push('Nota: ' + item.notes);
 
@@ -358,15 +431,13 @@
 
         els.cartItems.querySelectorAll('[data-edit]').forEach(btn => {
             btn.addEventListener('click', () => {
-                const idx = parseInt(btn.dataset.edit, 10);
-                openItemModal(cart[idx].menu_item_id, idx);
+                openItemModal(cart[parseInt(btn.dataset.edit, 10)].menu_item_id, parseInt(btn.dataset.edit, 10));
             });
         });
 
         els.cartItems.querySelectorAll('[data-remove]').forEach(btn => {
             btn.addEventListener('click', () => {
-                const idx = parseInt(btn.dataset.remove, 10);
-                cart.splice(idx, 1);
+                cart.splice(parseInt(btn.dataset.remove, 10), 1);
                 saveCart();
                 renderCart();
             });
@@ -385,6 +456,7 @@
             items: cart.map(item => ({
                 menu_item_id: item.menu_item_id,
                 quantity: item.quantity,
+                size: item.size || 'simple',
                 removed_ingredients: item.removed_ingredients,
                 added_extras: item.added_extras,
                 notes: item.notes,
@@ -392,7 +464,7 @@
         };
 
         try {
-            const res = await fetch('api/orders.php', {
+            const res = await apiFetch('api/orders.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
@@ -403,15 +475,14 @@
                 throw new Error(data.error || 'Error al enviar pedido');
             }
 
-            const settings = loadSettings();
+            const settings = {
+                ...loadSettings(),
+                cafeName: window.APP_CAFE_NAME || 'Artemisa Salón de Té',
+            };
 
             try {
                 const printResult = await ThermalPrinter.printOrder(data.order, settings);
-                const methodLabels = {
-                    bluetooth: 'Bluetooth',
-                    browser: 'navegador',
-                    network: 'red',
-                };
+                const methodLabels = { bluetooth: 'Bluetooth', browser: 'navegador', network: 'red' };
                 showToast(`Comanda enviada e impresa (${methodLabels[printResult.method] || 'ok'})`);
             } catch (printErr) {
                 showToast('Pedido guardado. Impresión: ' + printErr.message, 'error');
@@ -438,7 +509,6 @@
     function initSettings() {
         const settings = loadSettings();
 
-        if (settings.cafeName) els.cafeName.value = settings.cafeName;
         if (settings.printerMode) els.printerMode.value = settings.printerMode;
         if (settings.tableNumber) els.tableNumber.value = settings.tableNumber;
         if (settings.waiterName) els.waiterName.value = settings.waiterName;
@@ -446,8 +516,7 @@
         updatePrinterStatus();
 
         els.printerMode.addEventListener('change', () => {
-            const mode = els.printerMode.value;
-            $('#btPrinterGroup').style.display = mode === 'bluetooth' ? 'block' : 'none';
+            $('#btPrinterGroup').style.display = els.printerMode.value === 'bluetooth' ? 'block' : 'none';
         });
         els.printerMode.dispatchEvent(new Event('change'));
 
@@ -456,11 +525,7 @@
 
         els.settingsModal.querySelector('form').addEventListener('submit', (e) => {
             e.preventDefault();
-            saveSettings({
-                ...loadSettings(),
-                cafeName: els.cafeName.value.trim(),
-                printerMode: els.printerMode.value,
-            });
+            saveSettings({ ...loadSettings(), printerMode: els.printerMode.value });
             els.settingsModal.close();
             showToast('Configuración guardada');
         });
@@ -499,12 +564,8 @@
     }
 
     function bindEvents() {
-        els.cartToggle.addEventListener('click', () => {
-            els.cartPanel.classList.toggle('open');
-        });
-        els.closeCart.addEventListener('click', () => {
-            els.cartPanel.classList.remove('open');
-        });
+        els.cartToggle.addEventListener('click', () => els.cartPanel.classList.toggle('open'));
+        els.closeCart.addEventListener('click', () => els.cartPanel.classList.remove('open'));
 
         els.btnClearCart.addEventListener('click', () => {
             if (cart.length && confirm('¿Vaciar el pedido actual?')) {
@@ -517,13 +578,11 @@
         els.btnSendOrder.addEventListener('click', sendOrder);
 
         els.qtyMinus.addEventListener('click', () => {
-            const val = Math.max(1, (parseInt(els.itemQuantity.value, 10) || 1) - 1);
-            els.itemQuantity.value = val;
+            els.itemQuantity.value = Math.max(1, (parseInt(els.itemQuantity.value, 10) || 1) - 1);
             updateModalTotal();
         });
         els.qtyPlus.addEventListener('click', () => {
-            const val = Math.min(99, (parseInt(els.itemQuantity.value, 10) || 1) + 1);
-            els.itemQuantity.value = val;
+            els.itemQuantity.value = Math.min(99, (parseInt(els.itemQuantity.value, 10) || 1) + 1);
             updateModalTotal();
         });
         els.itemQuantity.addEventListener('input', updateModalTotal);

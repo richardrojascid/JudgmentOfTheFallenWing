@@ -119,6 +119,16 @@ class OrderService
         }
 
         $unitPrice = (float) $menuItem['price'];
+        $size = $cartItem['size'] ?? 'simple';
+        if ($size === 'doble' && $menuItem['price_double'] !== null) {
+            $unitPrice = (float) $menuItem['price_double'];
+        }
+
+        $itemName = $menuItem['name'];
+        if ($menuItem['price_double'] !== null) {
+            $itemName .= $size === 'doble' ? ' (Doble)' : ' (Simple)';
+        }
+
         $removed = $cartItem['removed_ingredients'] ?? [];
         $addedExtras = $cartItem['added_extras'] ?? [];
 
@@ -159,8 +169,9 @@ class OrderService
 
         return [
             'menu_item_id' => $menuItemId,
-            'item_name' => $menuItem['name'],
+            'item_name' => $itemName,
             'unit_price' => $unitPrice,
+            'size' => $size,
             'quantity' => $quantity,
             'extras_total' => $extrasTotal,
             'line_total' => $lineTotal,

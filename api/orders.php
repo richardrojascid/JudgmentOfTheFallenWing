@@ -5,8 +5,10 @@ require_once dirname(__DIR__) . '/includes/config.php';
 require_once dirname(__DIR__) . '/includes/Database.php';
 require_once dirname(__DIR__) . '/includes/MenuRepository.php';
 require_once dirname(__DIR__) . '/includes/OrderService.php';
+require_once dirname(__DIR__) . '/includes/Auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
+Auth::requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

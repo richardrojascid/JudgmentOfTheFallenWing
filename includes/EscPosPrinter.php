@@ -42,7 +42,7 @@ class EscPosPrinter
             $out .= self::bold(false);
 
             $unitPrice = (float) ($item['unit_price'] ?? 0);
-            $out .= self::text('   Precio unit.: $' . number_format($unitPrice, 2) . "\n");
+            $out .= self::text('   Precio unit.: ' . self::formatCLP($unitPrice) . "\n");
 
             $removed = $item['removed_ingredients'] ?? [];
             if (is_string($removed)) {
@@ -60,7 +60,7 @@ class EscPosPrinter
                 foreach ($extras as $extra) {
                     $extraName = is_array($extra) ? ($extra['name'] ?? '') : $extra;
                     $extraPrice = is_array($extra) ? (float) ($extra['price'] ?? 0) : 0;
-                    $priceStr = $extraPrice > 0 ? ' (+$' . number_format($extraPrice, 2) . ')' : '';
+                    $priceStr = $extraPrice > 0 ? ' (+' . self::formatCLP($extraPrice) . ')' : '';
                     $out .= self::text("   + {$extraName}{$priceStr}\n");
                 }
             }
@@ -69,14 +69,14 @@ class EscPosPrinter
                 $out .= self::text('   Nota: ' . $item['notes'] . "\n");
             }
 
-            $out .= self::text('   Subtotal: $' . number_format($lineTotal, 2) . "\n");
+            $out .= self::text('   Subtotal: ' . self::formatCLP($lineTotal) . "\n");
             $out .= self::text("\n");
         }
 
         $out .= self::separator();
         $out .= self::alignRight();
         $out .= self::bold(true);
-        $out .= self::text('TOTAL: $' . number_format((float) ($order['total'] ?? 0), 2) . "\n");
+        $out .= self::text('TOTAL: ' . self::formatCLP((float) ($order['total'] ?? 0)) . "\n");
         $out .= self::bold(false);
 
         $out .= self::separator();
@@ -138,6 +138,11 @@ class EscPosPrinter
     private static function feed(int $lines = 1): string
     {
         return self::ESC . 'd' . chr($lines);
+    }
+
+    private static function formatCLP(float $amount): string
+    {
+        return '$' . number_format($amount, 0, ',', '.');
     }
 
     private static function cut(): string

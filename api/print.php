@@ -6,8 +6,10 @@ require_once dirname(__DIR__) . '/includes/Database.php';
 require_once dirname(__DIR__) . '/includes/MenuRepository.php';
 require_once dirname(__DIR__) . '/includes/OrderService.php';
 require_once dirname(__DIR__) . '/includes/EscPosPrinter.php';
+require_once dirname(__DIR__) . '/includes/Auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
+Auth::requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -76,6 +78,11 @@ try {
     echo json_encode(['error' => 'Error al generar la comanda.']);
 }
 
+function formatCLP(float $amount): string
+{
+    return '$' . number_format($amount, 0, ',', '.');
+}
+
 function receiptToPlainText(array $order, array $items, string $cafeName): string
 {
     $lines = [];
@@ -100,7 +107,7 @@ function receiptToPlainText(array $order, array $items, string $cafeName): strin
         $qty = (int) ($item['quantity'] ?? 1);
         $name = $item['item_name'] ?? $item['name'] ?? 'Producto';
         $lines[] = "{$qty}x {$name}";
-        $lines[] = '   Precio unit.: $' . number_format((float) ($item['unit_price'] ?? 0), 2);
+        $lines[] = '   Precio unit.: ' . formatCLP((float) ($item['unit_price'] ?? 0));
 
         $removed = $item['removed_ingredients'] ?? [];
         if (is_string($removed)) {
@@ -117,7 +124,7 @@ function receiptToPlainText(array $order, array $items, string $cafeName): strin
         foreach ($extras as $extra) {
             $extraName = is_array($extra) ? ($extra['name'] ?? '') : $extra;
             $extraPrice = is_array($extra) ? (float) ($extra['price'] ?? 0) : 0;
-            $priceStr = $extraPrice > 0 ? ' (+$' . number_format($extraPrice, 2) . ')' : '';
+            $priceStr = $extraPrice > 0 ? ' (+' . formatCLP($extraPrice) . ')' : '';
             $lines[] = "   + {$extraName}{$priceStr}";
         }
 
@@ -125,12 +132,12 @@ function receiptToPlainText(array $order, array $items, string $cafeName): strin
             $lines[] = '   Nota: ' . $item['notes'];
         }
 
-        $lines[] = '   Subtotal: $' . number_format((float) ($item['line_total'] ?? 0), 2);
+        $lines[] = '   Subtotal: ' . formatCLP((float) ($item['line_total'] ?? 0));
         $lines[] = '';
     }
 
     $lines[] = str_repeat('-', 32);
-    $lines[] = 'TOTAL: $' . number_format((float) ($order['total'] ?? 0), 2);
+    $lines[] = 'TOTAL: ' . formatCLP((float) ($order['total'] ?? 0));
     $lines[] = str_repeat('-', 32);
     $lines[] = 'Gracias por su preferencia';
 
