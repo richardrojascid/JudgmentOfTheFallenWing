@@ -5,23 +5,28 @@ using UnityEngine;
 namespace JudgmentOfTheFallenWing.Enemies
 {
     /// <summary>
-    /// Vida genérica para enemigos. Funciona solo o junto a tu script de IA existente.
-    /// Añadir a Poseido_Condenado_01, Zombi_Penitente_01, etc.
+    /// Vida del enemigo. Sincroniza la barra con Enemy Damage u otros scripts vía SetHealth().
     /// </summary>
     [RequireComponent(typeof(EnemyHealthBar))]
+    [DisallowMultipleComponent]
     public class EnemyHealth : MonoBehaviour, IDamageable
     {
         [SerializeField] private float maxHealth = 30f;
+        [SerializeField] private float currentHealth = 30f;
 
-        private float _currentHealth;
         private EnemyHealthBar _healthBar;
 
-        public bool IsAlive => _currentHealth > 0f;
+        public bool IsAlive => currentHealth > 0f;
         public float MaxHealth => maxHealth;
-        public float CurrentHealth => _currentHealth;
+        public float CurrentHealth => currentHealth;
 
         public event Action<float, float> OnHealthChanged;
         public event Action OnDied;
+
+        private void Reset()
+        {
+            currentHealth = maxHealth;
+        }
 
         private void Awake()
         {
@@ -29,12 +34,19 @@ namespace JudgmentOfTheFallenWing.Enemies
             if (_healthBar == null)
                 _healthBar = gameObject.AddComponent<EnemyHealthBar>();
 
-            _currentHealth = maxHealth;
+            if (currentHealth <= 0f || currentHealth > maxHealth)
+                currentHealth = maxHealth;
         }
 
         private void Start()
         {
             RefreshBar();
+        }
+
+        private void OnValidate()
+        {
+            if (maxHealth < 1f) maxHealth = 1f;
+            currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
         }
 
         public void TakeDamage(float amount)
@@ -46,12 +58,11 @@ namespace JudgmentOfTheFallenWing.Enemies
         {
             if (!IsAlive) return;
 
-            _currentHealth = Mathf.Max(0f, _currentHealth - damage.Amount);
+            currentHealth = Mathf.Max(0f, currentHealth - damage.Amount);
             RefreshBar();
 
-            Debug.Log($"{name} recibió {damage.Amount} de daño. Vida: {_currentHealth}");
-
-            OnHealthChanged?.Invoke(_currentHealth, maxHealth);
+            Debug.Log($"{name} recibió {damage.Amount} de daño. Vida: {currentHealth}");
+            OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
             if (!IsAlive)
             {
@@ -62,18 +73,29 @@ namespace JudgmentOfTheFallenWing.Enemies
         }
 
         /// <summary>
-        /// Usar desde tu script de enemigo si ya gestionas la vida manualmente.
+        /// Llamar desde Enemy Damage u otro script al cambiar la vida.
         /// </summary>
         public void SetHealth(float current)
         {
-            _currentHealth = Mathf.Clamp(current, 0f, maxHealth);
+            currentHealth = Mathf.Clamp(current, 0f, maxHealth);
             RefreshBar();
-            OnHealthChanged?.Invoke(_currentHealth, maxHealth);
+            OnHealthChanged?.Invoke(currentHealth, maxHealth);
+
+            if (!IsAlive)
+                _healthBar.Hide();
+        }
+
+        public void SetMaxHealth(float max, bool refill = true)
+        {
+            maxHealth = Mathf.Max(1f, max);
+            if (refill)
+                currentHealth = maxHealth;
+            RefreshBar();
         }
 
         public void RefreshBar()
         {
-            _healthBar?.UpdateBar(_currentHealth, maxHealth);
+            _healthBar?.UpdateBar(currentHealth, maxHealth);
         }
     }
 }
