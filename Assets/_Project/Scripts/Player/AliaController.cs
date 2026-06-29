@@ -4,13 +4,13 @@ using UnityEngine;
 namespace JudgmentOfTheFallenWing.Player
 {
     /// <summary>
-    /// Controlador principal de ARIA — movimiento Metroidvania con coyote time,
+    /// Controlador principal de ALIA — movimiento Metroidvania con coyote time,
     /// jump buffer, wall slide/jump y dash.
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
-    [RequireComponent(typeof(AriaHealth))]
-    [RequireComponent(typeof(AriaAbilityController))]
-    public class AriaController : MonoBehaviour
+    [RequireComponent(typeof(AliaHealth))]
+    [RequireComponent(typeof(AliaAbilityController))]
+    public class AliaController : MonoBehaviour
     {
         [Header("Movimiento")]
         [SerializeField] private float moveSpeed = 8f;
@@ -37,13 +37,13 @@ namespace JudgmentOfTheFallenWing.Player
         [SerializeField] private LayerMask groundLayer;
 
         [Header("Referencias")]
-        [SerializeField] private AriaCombat combat;
+        [SerializeField] private AliaCombat combat;
         [SerializeField] private Animator animator;
         [SerializeField] private SpriteRenderer spriteRenderer;
 
         private Rigidbody2D _rb;
-        private AriaAbilityController _abilities;
-        private AriaHealth _health;
+        private AliaAbilityController _abilities;
+        private AliaHealth _health;
 
         private float _horizontalInput;
         private float _coyoteCounter;
@@ -63,8 +63,8 @@ namespace JudgmentOfTheFallenWing.Player
         private void Awake()
         {
             _rb = GetComponent<Rigidbody2D>();
-            _abilities = GetComponent<AriaAbilityController>();
-            _health = GetComponent<AriaHealth>();
+            _abilities = GetComponent<AliaAbilityController>();
+            _health = GetComponent<AliaHealth>();
         }
 
         private void Update()

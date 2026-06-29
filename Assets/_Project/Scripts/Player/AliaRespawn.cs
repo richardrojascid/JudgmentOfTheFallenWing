@@ -4,19 +4,19 @@ using UnityEngine;
 namespace JudgmentOfTheFallenWing.Player
 {
     /// <summary>
-    /// Gestiona la muerte y respawn de ARIA en el último checkpoint.
+    /// Gestiona la muerte y respawn de ALIA en el último checkpoint.
     /// </summary>
-    public class AriaRespawn : MonoBehaviour
+    public class AliaRespawn : MonoBehaviour
     {
         [SerializeField] private float respawnDelay = 1.5f;
 
-        private AriaHealth _health;
+        private AliaHealth _health;
         private Vector3 _spawnPosition;
         private bool _isDead;
 
         private void Awake()
         {
-            _health = GetComponent<AriaHealth>();
+            _health = GetComponent<AliaHealth>();
             _spawnPosition = transform.position;
         }
 

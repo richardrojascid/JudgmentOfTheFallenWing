@@ -23,7 +23,7 @@ namespace JudgmentOfTheFallenWing.World
         {
             if (!other.CompareTag("Player")) return;
 
-            var abilities = other.GetComponent<AriaAbilityController>();
+            var abilities = other.GetComponent<AliaAbilityController>();
             if (abilities == null) return;
 
             abilities.UnlockAbility(abilityToGrant);

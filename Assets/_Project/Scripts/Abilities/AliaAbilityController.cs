@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace JudgmentOfTheFallenWing.Abilities
 {
-    public class AriaAbilityController : MonoBehaviour, ISaveable
+    public class AliaAbilityController : MonoBehaviour, ISaveable
     {
         private readonly HashSet<AbilityType> _unlocked = new();
 
@@ -23,7 +23,7 @@ namespace JudgmentOfTheFallenWing.Abilities
             if (_unlocked.Add(ability))
             {
                 GameEvents.RaiseAbilityUnlocked(ability.ToString());
-                Debug.Log($"[ARIA] Habilidad desbloqueada: {ability}");
+                Debug.Log($"[ALIA] Habilidad desbloqueada: {ability}");
             }
         }
 

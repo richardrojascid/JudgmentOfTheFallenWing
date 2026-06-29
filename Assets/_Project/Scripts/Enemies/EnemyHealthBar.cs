@@ -65,7 +65,6 @@ namespace JudgmentOfTheFallenWing.Enemies
 
             if (canvas != null && fillImage != null)
             {
-                _barRoot = canvas.transform;
                 EnsureCanvasGroup();
                 return;
             }
@@ -88,7 +87,6 @@ namespace JudgmentOfTheFallenWing.Enemies
             var canvasRect = canvasGo.GetComponent<RectTransform>();
             canvasRect.sizeDelta = barSize;
             canvasRect.localScale = Vector3.one;
-            _barRoot = canvasGo.transform;
 
             canvasGroup = canvasGo.AddComponent<CanvasGroup>();
 

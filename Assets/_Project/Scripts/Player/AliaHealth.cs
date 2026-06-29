@@ -7,7 +7,7 @@ using UnityEngine;
 namespace JudgmentOfTheFallenWing.Player
 {
     [RequireComponent(typeof(Rigidbody2D))]
-    public class AriaHealth : MonoBehaviour, IDamageable, ISaveable
+    public class AliaHealth : MonoBehaviour, IDamageable, ISaveable
     {
         [SerializeField] private float maxHealth = 100f;
         [SerializeField] private float invulnerabilityDuration = 1f;
@@ -56,7 +56,7 @@ namespace JudgmentOfTheFallenWing.Player
             if (!IsAlive)
             {
                 GameEvents.RaisePlayerDied();
-                Debug.Log("[ARIA] Ha caído...");
+                Debug.Log("[ALIA] Ha caído...");
             }
         }
 

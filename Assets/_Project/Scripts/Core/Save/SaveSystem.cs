@@ -5,7 +5,7 @@ namespace JudgmentOfTheFallenWing.Core.Save
 {
     public static class SaveSystem
     {
-        private const string SaveFileName = "aria_save.json";
+        private const string SaveFileName = "alia_save.json";
 
         private static string SavePath =>
             Path.Combine(Application.persistentDataPath, SaveFileName);

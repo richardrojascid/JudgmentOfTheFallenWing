@@ -32,7 +32,7 @@ namespace JudgmentOfTheFallenWing.World
             if (_isOpen) return;
             if (!other.CompareTag("Player")) return;
 
-            var abilities = other.GetComponent<AriaAbilityController>();
+            var abilities = other.GetComponent<AliaAbilityController>();
             if (abilities == null || !abilities.HasAbility(requiredAbility)) return;
 
             OpenGate();

@@ -1,6 +1,6 @@
 # Judgment of the Fallen Wing
 
-**Judgment of the Fallen Wing** es un Metroidvania 2D en Unity. La protagonista es **ARIA**, portadora del Ala Caída.
+**Judgment of the Fallen Wing** es un Metroidvania 2D en Unity. La protagonista es **ALIA**, portadora del Ala Caída.
 
 ## Requisitos
 
@@ -13,7 +13,7 @@
 Assets/_Project/
 ├── Scripts/
 │   ├── Core/          # GameManager, SaveSystem, eventos globales
-│   ├── Player/        # ARIA: movimiento, combate, salud, respawn
+│   ├── Player/        # ALIA: movimiento, combate, salud, respawn
 │   ├── Abilities/     # Sistema de habilidades (gating Metroidvania)
 │   ├── Combat/        # Daño, hitboxes
 │   ├── Enemies/       # IA base de enemigos
@@ -28,15 +28,15 @@ Assets/_Project/
 └── ScriptableObjects/
 ```
 
-## Configuración rápida de ARIA
+## Configuración rápida de ALIA
 
-1. Crear GameObject `ARIA` con tag **Player** y layer **Player**.
+1. Crear GameObject `ALIA` con tag **Player** y layer **Player**.
 2. Añadir componentes:
    - `Rigidbody2D` (Dynamic, Freeze Rotation Z, Gravity Scale 3)
    - `CapsuleCollider2D`
    - `SpriteRenderer` + `Animator`
-   - `AriaController`, `AriaHealth`, `AriaCombat`, `AriaAbilityController`, `AriaRespawn`
-3. Crear hijo `GroundCheck` (posición bajo los pies) y asignarlo en `AriaController`.
+   - `AliaController`, `AliaHealth`, `AliaCombat`, `AliaAbilityController`, `AliaRespawn`
+3. Crear hijo `GroundCheck` (posición bajo los pies) y asignarlo en `AliaController`.
 4. Crear hijo `AttackPoint` con collider trigger + `Hitbox` para el ataque.
 5. Asignar layer **Ground** a plataformas y suelo.
 
@@ -52,14 +52,14 @@ Assets/_Project/
 
 ## Sistemas implementados
 
-### Movimiento Metroidvania (`AriaController`)
+### Movimiento Metroidvania (`AliaController`)
 - Aceleración/desaceleración suave
 - Coyote time y jump buffer
 - Wall slide / wall jump (requiere habilidad)
 - Double jump (requiere habilidad)
 - Dash (requiere habilidad)
 
-### Progresión (`AriaAbilityController` + `AbilityPickup` + `AbilityGate`)
+### Progresión (`AliaAbilityController` + `AbilityPickup` + `AbilityGate`)
 Las habilidades se desbloquean con pickups en el mundo y abren puertas/pasajes bloqueados.
 
 Habilidades definidas: `DoubleJump`, `Dash`, `WallJump`, `Glide`, `GroundPound`, `WingSlash`.
@@ -87,7 +87,7 @@ Bus de eventos estático para desacoplar UI, audio y gameplay.
 ## Próximos pasos de desarrollo
 
 1. **Sincronizar** tu proyecto local con este repositorio (`git pull` + merge de scripts).
-2. **Animaciones** de ARIA con parámetros: `Speed`, `VelocityY`, `IsGrounded`, `IsWallSliding`, `IsDashing`, `Attack`.
+2. **Animaciones** de ALIA con parámetros: `Speed`, `VelocityY`, `IsGrounded`, `IsWallSliding`, `IsDashing`, `Attack`.
 3. **Tilemaps** + Composite Collider 2D para nivel.
 4. **Minimapa** basado en `RoomTrigger` + `SaveData.visitedRooms`.
 5. **Boss fights** extendiendo `EnemyBase`.

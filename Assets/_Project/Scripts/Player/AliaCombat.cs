@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace JudgmentOfTheFallenWing.Player
 {
-    public class AriaCombat : MonoBehaviour
+    public class AliaCombat : MonoBehaviour
     {
         [SerializeField] private Hitbox attackHitbox;
         [SerializeField] private Transform attackPoint;
