@@ -4,6 +4,7 @@ using UnityEngine;
 namespace JudgmentOfTheFallenWing.Enemies
 {
     [RequireComponent(typeof(Rigidbody2D))]
+    [RequireComponent(typeof(Collider2D))]
     [RequireComponent(typeof(EnemyHealthBar))]
     public class EnemyBase : MonoBehaviour, IDamageable
     {
@@ -30,6 +31,9 @@ namespace JudgmentOfTheFallenWing.Enemies
         {
             _rb = GetComponent<Rigidbody2D>();
             _healthBar = GetComponent<EnemyHealthBar>();
+            if (_healthBar == null)
+                _healthBar = gameObject.AddComponent<EnemyHealthBar>();
+
             _currentHealth = maxHealth;
         }
 

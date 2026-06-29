@@ -30,7 +30,8 @@ namespace JudgmentOfTheFallenWing.Combat
             if (((1 << other.gameObject.layer) & targetLayers) == 0) return;
             if (other.gameObject == _owner) return;
 
-            if (other.TryGetComponent<IDamageable>(out var damageable) && damageable.IsAlive)
+            var damageable = other.GetComponentInParent<IDamageable>();
+            if (damageable != null && damageable.IsAlive)
             {
                 var direction = (other.transform.position - transform.position).normalized;
                 var knockbackVector = new Vector2(direction.x * knockback.x, knockback.y);
