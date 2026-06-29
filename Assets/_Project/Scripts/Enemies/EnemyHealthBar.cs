@@ -4,10 +4,13 @@ namespace JudgmentOfTheFallenWing.Enemies
 {
     /// <summary>
     /// Barra de vida sobre el enemigo usando SpriteRenderers (fiable en 2D).
+    /// Añadir manualmente a cualquier enemigo; no requiere EnemyBase.
     /// </summary>
     public class EnemyHealthBar : MonoBehaviour
     {
         [Header("Posición")]
+        [SerializeField] private bool autoOffsetFromSprite = true;
+        [SerializeField] private float offsetPadding = 0.12f;
         [SerializeField] private Vector3 offset = new(0f, 1.1f, 0f);
         [SerializeField] private Vector2 barSize = new(0.8f, 0.08f);
 
@@ -26,15 +29,20 @@ namespace JudgmentOfTheFallenWing.Enemies
         [SerializeField] private SpriteRenderer fillRenderer;
 
         private SpriteRenderer _backgroundRenderer;
+        private SpriteRenderer _ownerSprite;
         private static Sprite _whiteSprite;
         private bool _isBuilt;
 
         private void Awake()
         {
+            ResolveOffset();
             BuildIfNeeded();
             SetVisible(!showOnlyWhenDamaged);
         }
 
+        /// <summary>
+        /// Actualiza la barra. Llamar desde el script de vida del enemigo al recibir daño o en Start.
+        /// </summary>
         public void UpdateBar(float current, float max)
         {
             BuildIfNeeded();
@@ -43,7 +51,10 @@ namespace JudgmentOfTheFallenWing.Enemies
 
             var normalized = Mathf.Clamp01(current / max);
             fillTransform.localScale = new Vector3(barSize.x * normalized, barSize.y, 1f);
-            fillTransform.localPosition = new Vector3(-barSize.x * 0.5f + (barSize.x * normalized * 0.5f), 0f, 0f);
+            fillTransform.localPosition = new Vector3(
+                -barSize.x * 0.5f + (barSize.x * normalized * 0.5f),
+                0f,
+                0f);
 
             if (fillRenderer != null)
                 fillRenderer.color = normalized <= lowHealthThreshold ? fillColorLow : fillColor;
@@ -55,6 +66,25 @@ namespace JudgmentOfTheFallenWing.Enemies
         }
 
         public void Hide() => SetVisible(false);
+
+        private void LateUpdate()
+        {
+            if (barRoot == null || _ownerSprite == null) return;
+
+            // Mantener la barra centrada aunque el sprite haga flipX
+            var flipSign = _ownerSprite.flipX ? -1f : 1f;
+            barRoot.localScale = new Vector3(flipSign, 1f, 1f);
+        }
+
+        private void ResolveOffset()
+        {
+            if (!autoOffsetFromSprite) return;
+
+            _ownerSprite = GetComponent<SpriteRenderer>();
+            if (_ownerSprite == null || _ownerSprite.sprite == null) return;
+
+            offset.y = _ownerSprite.sprite.bounds.extents.y + offsetPadding;
+        }
 
         private void SetVisible(bool visible)
         {
@@ -75,6 +105,8 @@ namespace JudgmentOfTheFallenWing.Enemies
 
         private void CreateDefaultBar()
         {
+            _ownerSprite ??= GetComponent<SpriteRenderer>();
+
             var rootGo = new GameObject("HealthBar");
             rootGo.transform.SetParent(transform, false);
             rootGo.transform.localPosition = offset;
@@ -93,7 +125,6 @@ namespace JudgmentOfTheFallenWing.Enemies
             fillRenderer.sprite = GetWhiteSprite();
             fillRenderer.color = fillColor;
             fillGo.transform.localScale = new Vector3(barSize.x, barSize.y, 1f);
-            fillGo.transform.localPosition = Vector3.zero;
             fillTransform = fillGo.transform;
 
             ApplySorting();
@@ -101,7 +132,7 @@ namespace JudgmentOfTheFallenWing.Enemies
 
         private void ApplySorting()
         {
-            var reference = GetComponentInParent<SpriteRenderer>();
+            var reference = _ownerSprite ?? GetComponent<SpriteRenderer>();
             if (reference == null) return;
 
             _backgroundRenderer.sortingLayerID = reference.sortingLayerID;
