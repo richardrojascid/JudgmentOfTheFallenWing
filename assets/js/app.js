@@ -1,0 +1,552 @@
+/**
+ * Café Comanda — Aplicación para meseros
+ */
+(() => {
+    const STORAGE_KEY = 'cafe_comanda_settings';
+    const CART_KEY = 'cafe_comanda_cart';
+
+    let menu = [];
+    let cart = [];
+    let currentItem = null;
+    let editingCartIndex = -1;
+    let selectedCategoryId = null;
+
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => document.querySelectorAll(sel);
+
+    const els = {
+        categoryTabs: $('#categoryTabs'),
+        menuGrid: $('#menuGrid'),
+        cartPanel: $('#cartPanel'),
+        cartToggle: $('#cartToggle'),
+        cartContent: $('#cartContent'),
+        cartCount: $('#cartCount'),
+        cartTotal: $('#cartTotal'),
+        cartTotalPreview: $('#cartTotalPreview'),
+        cartItems: $('#cartItems'),
+        closeCart: $('#closeCart'),
+        btnClearCart: $('#btnClearCart'),
+        btnSendOrder: $('#btnSendOrder'),
+        tableNumber: $('#tableNumber'),
+        waiterName: $('#waiterName'),
+        itemModal: $('#itemModal'),
+        itemForm: $('#itemForm'),
+        modalItemName: $('#modalItemName'),
+        modalItemDesc: $('#modalItemDesc'),
+        modalItemPrice: $('#modalItemPrice'),
+        itemQuantity: $('#itemQuantity'),
+        qtyMinus: $('#qtyMinus'),
+        qtyPlus: $('#qtyPlus'),
+        ingredientsGroup: $('#ingredientsGroup'),
+        ingredientsList: $('#ingredientsList'),
+        extrasGroup: $('#extrasGroup'),
+        extrasList: $('#extrasList'),
+        itemNotes: $('#itemNotes'),
+        modalLineTotal: $('#modalLineTotal'),
+        modalClose: $('#modalClose'),
+        modalCancel: $('#modalCancel'),
+        settingsModal: $('#settingsModal'),
+        btnSettings: $('#btnSettings'),
+        settingsClose: $('#settingsClose'),
+        cafeName: $('#cafeName'),
+        printerMode: $('#printerMode'),
+        btnConnectPrinter: $('#btnConnectPrinter'),
+        printerStatus: $('#printerStatus'),
+    };
+
+    function loadSettings() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        } catch {
+            return {};
+        }
+    }
+
+    function saveSettings(settings) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    }
+
+    function loadCart() {
+        try {
+            cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+        } catch {
+            cart = [];
+        }
+    }
+
+    function saveCart() {
+        localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+
+    function formatMoney(amount) {
+        return '$' + Number(amount).toFixed(2);
+    }
+
+    function getCartTotal() {
+        return cart.reduce((sum, item) => sum + item.line_total, 0);
+    }
+
+    function getCartCount() {
+        return cart.reduce((sum, item) => sum + item.quantity, 0);
+    }
+
+    function showToast(message, type = 'success') {
+        const existing = $('.toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type} show`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    async function loadMenu() {
+        els.menuGrid.innerHTML = '<p class="loading">Cargando carta...</p>';
+
+        try {
+            const res = await fetch('api/menu.php');
+            const data = await res.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Error al cargar menú');
+            }
+
+            menu = data.categories;
+            renderCategoryTabs();
+            if (menu.length > 0) {
+                selectedCategoryId = menu[0].id;
+                renderMenu();
+            }
+        } catch (err) {
+            els.menuGrid.innerHTML = `<p class="loading">${err.message}</p>`;
+        }
+    }
+
+    function renderCategoryTabs() {
+        els.categoryTabs.innerHTML = menu.map(cat => `
+            <button type="button" class="tab-btn ${cat.id === selectedCategoryId ? 'active' : ''}"
+                    data-category="${cat.id}" role="tab">
+                ${escapeHtml(cat.name)}
+            </button>
+        `).join('');
+
+        els.categoryTabs.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectedCategoryId = parseInt(btn.dataset.category, 10);
+                renderCategoryTabs();
+                renderMenu();
+            });
+        });
+    }
+
+    function renderMenu() {
+        const category = menu.find(c => c.id === selectedCategoryId);
+        if (!category) return;
+
+        els.menuGrid.innerHTML = category.items.map(item => `
+            <article class="menu-card" data-item-id="${item.id}" tabindex="0" role="button"
+                     aria-label="${escapeHtml(item.name)} ${formatMoney(item.price)}">
+                <h3>${escapeHtml(item.name)}</h3>
+                ${item.description ? `<p class="description">${escapeHtml(item.description)}</p>` : ''}
+                <p class="price">${formatMoney(item.price)}</p>
+            </article>
+        `).join('');
+
+        els.menuGrid.querySelectorAll('.menu-card').forEach(card => {
+            const open = () => openItemModal(parseInt(card.dataset.itemId, 10));
+            card.addEventListener('click', open);
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    open();
+                }
+            });
+        });
+    }
+
+    function findMenuItem(id) {
+        for (const cat of menu) {
+            const item = cat.items.find(i => i.id === id);
+            if (item) return item;
+        }
+        return null;
+    }
+
+    function openItemModal(itemId, cartIndex = -1) {
+        const item = findMenuItem(itemId);
+        if (!item) return;
+
+        currentItem = item;
+        editingCartIndex = cartIndex;
+
+        els.modalItemName.textContent = item.name;
+        els.modalItemDesc.textContent = item.description || '';
+        els.modalItemPrice.textContent = formatMoney(item.price);
+
+        if (cartIndex >= 0) {
+            const cartItem = cart[cartIndex];
+            els.itemQuantity.value = cartItem.quantity;
+            els.itemNotes.value = cartItem.notes || '';
+            renderIngredients(cartItem.removed_ingredients);
+            renderExtras(cartItem.added_extras.map(e => e.id || e.name));
+        } else {
+            els.itemQuantity.value = 1;
+            els.itemNotes.value = '';
+            renderIngredients([]);
+            renderExtras([]);
+        }
+
+        updateModalTotal();
+        els.itemModal.showModal();
+    }
+
+    function renderIngredients(removed) {
+        if (!currentItem.ingredients?.length) {
+            els.ingredientsGroup.hidden = true;
+            els.ingredientsList.innerHTML = '';
+            return;
+        }
+
+        els.ingredientsGroup.hidden = false;
+        els.ingredientsList.innerHTML = currentItem.ingredients
+            .filter(i => i.removable)
+            .map(ing => `
+                <button type="button" class="chip ${removed.includes(ing.name) ? 'selected' : ''}"
+                        data-ingredient="${escapeHtml(ing.name)}">
+                    Sin ${escapeHtml(ing.name)}
+                </button>
+            `).join('');
+
+        els.ingredientsList.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('selected');
+                updateModalTotal();
+            });
+        });
+    }
+
+    function renderExtras(selectedExtras) {
+        if (!currentItem.extras?.length) {
+            els.extrasGroup.hidden = true;
+            els.extrasList.innerHTML = '';
+            return;
+        }
+
+        els.extrasGroup.hidden = false;
+        els.extrasList.innerHTML = currentItem.extras.map(extra => {
+            const isSelected = selectedExtras.includes(extra.id) || selectedExtras.includes(extra.name);
+            const priceLabel = extra.price > 0 ? ` <span class="chip-price">+${formatMoney(extra.price)}</span>` : '';
+            return `
+                <button type="button" class="chip ${isSelected ? 'extra-selected' : ''}"
+                        data-extra-id="${extra.id}">
+                    ${escapeHtml(extra.name)}${priceLabel}
+                </button>
+            `;
+        }).join('');
+
+        els.extrasList.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('extra-selected');
+                updateModalTotal();
+            });
+        });
+    }
+
+    function getSelectedRemoved() {
+        return [...els.ingredientsList.querySelectorAll('.chip.selected')]
+            .map(c => c.dataset.ingredient);
+    }
+
+    function getSelectedExtras() {
+        const selected = [];
+        els.extrasList.querySelectorAll('.chip.extra-selected').forEach(chip => {
+            const extraId = parseInt(chip.dataset.extraId, 10);
+            const extra = currentItem.extras.find(e => e.id === extraId);
+            if (extra) selected.push(extra);
+        });
+        return selected;
+    }
+
+    function updateModalTotal() {
+        if (!currentItem) return;
+
+        const qty = Math.max(1, parseInt(els.itemQuantity.value, 10) || 1);
+        const extras = getSelectedExtras();
+        const extrasTotal = extras.reduce((s, e) => s + e.price, 0);
+        const lineTotal = (currentItem.price + extrasTotal) * qty;
+
+        els.modalLineTotal.textContent = formatMoney(lineTotal);
+    }
+
+    function addToCart() {
+        const qty = Math.max(1, parseInt(els.itemQuantity.value, 10) || 1);
+        const removed = getSelectedRemoved();
+        const extras = getSelectedExtras();
+        const extrasTotal = extras.reduce((s, e) => s + e.price, 0);
+        const notes = els.itemNotes.value.trim();
+
+        const cartItem = {
+            menu_item_id: currentItem.id,
+            item_name: currentItem.name,
+            unit_price: currentItem.price,
+            quantity: qty,
+            extras_total: extrasTotal,
+            line_total: (currentItem.price + extrasTotal) * qty,
+            removed_ingredients: removed,
+            added_extras: extras.map(e => ({ id: e.id, name: e.name, price: e.price })),
+            notes,
+        };
+
+        if (editingCartIndex >= 0) {
+            cart[editingCartIndex] = cartItem;
+        } else {
+            cart.push(cartItem);
+        }
+
+        saveCart();
+        renderCart();
+        els.itemModal.close();
+        showToast('Producto agregado al pedido');
+    }
+
+    function renderCart() {
+        const count = getCartCount();
+        const total = getCartTotal();
+
+        els.cartCount.textContent = count;
+        els.cartTotal.textContent = formatMoney(total);
+        els.cartTotalPreview.textContent = formatMoney(total);
+        els.btnSendOrder.disabled = count === 0;
+
+        if (cart.length === 0) {
+            els.cartItems.innerHTML = '<li class="empty-cart">No hay productos en el pedido</li>';
+            return;
+        }
+
+        els.cartItems.innerHTML = cart.map((item, index) => {
+            let details = [];
+            if (item.removed_ingredients?.length) {
+                details.push('Sin: ' + item.removed_ingredients.join(', '));
+            }
+            if (item.added_extras?.length) {
+                details.push('Extras: ' + item.added_extras.map(e => {
+                    const p = e.price > 0 ? ` (+${formatMoney(e.price)})` : '';
+                    return e.name + p;
+                }).join(', '));
+            }
+            if (item.notes) details.push('Nota: ' + item.notes);
+
+            return `
+                <li class="cart-item">
+                    <div class="cart-item-header">
+                        <span class="cart-item-name">${item.quantity}x ${escapeHtml(item.item_name)}</span>
+                        <span class="cart-item-price">${formatMoney(item.line_total)}</span>
+                    </div>
+                    ${details.length ? `<div class="cart-item-details">${escapeHtml(details.join(' · '))}</div>` : ''}
+                    <div class="cart-item-actions">
+                        <button type="button" class="btn btn-secondary btn-sm" data-edit="${index}">Editar</button>
+                        <button type="button" class="btn btn-danger btn-sm" data-remove="${index}">Quitar</button>
+                    </div>
+                </li>
+            `;
+        }).join('');
+
+        els.cartItems.querySelectorAll('[data-edit]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.edit, 10);
+                openItemModal(cart[idx].menu_item_id, idx);
+            });
+        });
+
+        els.cartItems.querySelectorAll('[data-remove]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.remove, 10);
+                cart.splice(idx, 1);
+                saveCart();
+                renderCart();
+            });
+        });
+    }
+
+    async function sendOrder() {
+        if (cart.length === 0) return;
+
+        els.btnSendOrder.disabled = true;
+        els.btnSendOrder.textContent = 'Enviando...';
+
+        const payload = {
+            table_number: els.tableNumber.value.trim() || null,
+            waiter_name: els.waiterName.value.trim() || null,
+            items: cart.map(item => ({
+                menu_item_id: item.menu_item_id,
+                quantity: item.quantity,
+                removed_ingredients: item.removed_ingredients,
+                added_extras: item.added_extras,
+                notes: item.notes,
+            })),
+        };
+
+        try {
+            const res = await fetch('api/orders.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await res.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Error al enviar pedido');
+            }
+
+            const settings = loadSettings();
+
+            try {
+                const printResult = await ThermalPrinter.printOrder(data.order, settings);
+                const methodLabels = {
+                    bluetooth: 'Bluetooth',
+                    browser: 'navegador',
+                    network: 'red',
+                };
+                showToast(`Comanda enviada e impresa (${methodLabels[printResult.method] || 'ok'})`);
+            } catch (printErr) {
+                showToast('Pedido guardado. Impresión: ' + printErr.message, 'error');
+            }
+
+            cart = [];
+            saveCart();
+            renderCart();
+            els.cartPanel.classList.remove('open');
+        } catch (err) {
+            showToast(err.message, 'error');
+        } finally {
+            els.btnSendOrder.disabled = cart.length === 0;
+            els.btnSendOrder.textContent = 'Enviar comanda';
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function initSettings() {
+        const settings = loadSettings();
+
+        if (settings.cafeName) els.cafeName.value = settings.cafeName;
+        if (settings.printerMode) els.printerMode.value = settings.printerMode;
+        if (settings.tableNumber) els.tableNumber.value = settings.tableNumber;
+        if (settings.waiterName) els.waiterName.value = settings.waiterName;
+
+        updatePrinterStatus();
+
+        els.printerMode.addEventListener('change', () => {
+            const mode = els.printerMode.value;
+            $('#btPrinterGroup').style.display = mode === 'bluetooth' ? 'block' : 'none';
+        });
+        els.printerMode.dispatchEvent(new Event('change'));
+
+        els.btnSettings.addEventListener('click', () => els.settingsModal.showModal());
+        els.settingsClose.addEventListener('click', () => els.settingsModal.close());
+
+        els.settingsModal.querySelector('form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveSettings({
+                ...loadSettings(),
+                cafeName: els.cafeName.value.trim(),
+                printerMode: els.printerMode.value,
+            });
+            els.settingsModal.close();
+            showToast('Configuración guardada');
+        });
+
+        els.btnConnectPrinter.addEventListener('click', async () => {
+            try {
+                els.btnConnectPrinter.disabled = true;
+                const name = await ThermalPrinter.connectBluetooth();
+                saveSettings({ ...loadSettings(), printerName: name });
+                updatePrinterStatus();
+                showToast(`Conectado: ${name}`);
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                els.btnConnectPrinter.disabled = false;
+            }
+        });
+
+        els.tableNumber.addEventListener('change', () => {
+            saveSettings({ ...loadSettings(), tableNumber: els.tableNumber.value });
+        });
+        els.waiterName.addEventListener('change', () => {
+            saveSettings({ ...loadSettings(), waiterName: els.waiterName.value });
+        });
+    }
+
+    function updatePrinterStatus() {
+        const settings = loadSettings();
+        if (ThermalPrinter.isConnected()) {
+            els.printerStatus.textContent = 'Conectada: ' + (settings.printerName || 'Bluetooth');
+        } else if (settings.printerName) {
+            els.printerStatus.textContent = 'Desconectada (vuelve a conectar)';
+        } else {
+            els.printerStatus.textContent = 'No conectada';
+        }
+    }
+
+    function bindEvents() {
+        els.cartToggle.addEventListener('click', () => {
+            els.cartPanel.classList.toggle('open');
+        });
+        els.closeCart.addEventListener('click', () => {
+            els.cartPanel.classList.remove('open');
+        });
+
+        els.btnClearCart.addEventListener('click', () => {
+            if (cart.length && confirm('¿Vaciar el pedido actual?')) {
+                cart = [];
+                saveCart();
+                renderCart();
+            }
+        });
+
+        els.btnSendOrder.addEventListener('click', sendOrder);
+
+        els.qtyMinus.addEventListener('click', () => {
+            const val = Math.max(1, (parseInt(els.itemQuantity.value, 10) || 1) - 1);
+            els.itemQuantity.value = val;
+            updateModalTotal();
+        });
+        els.qtyPlus.addEventListener('click', () => {
+            const val = Math.min(99, (parseInt(els.itemQuantity.value, 10) || 1) + 1);
+            els.itemQuantity.value = val;
+            updateModalTotal();
+        });
+        els.itemQuantity.addEventListener('input', updateModalTotal);
+
+        els.itemForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            addToCart();
+        });
+        els.modalClose.addEventListener('click', () => els.itemModal.close());
+        els.modalCancel.addEventListener('click', () => els.itemModal.close());
+    }
+
+    function init() {
+        loadCart();
+        initSettings();
+        bindEvents();
+        renderCart();
+        loadMenu();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();

@@ -1,0 +1,11 @@
+{
+    "name": "Café Comanda",
+    "short_name": "Comanda",
+    "description": "Sistema de comandas para meseros",
+    "start_url": "/index.php",
+    "display": "standalone",
+    "background_color": "#1a1008",
+    "theme_color": "#3d2314",
+    "orientation": "portrait-primary",
+    "lang": "es"
+}
