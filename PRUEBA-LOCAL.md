@@ -5,7 +5,101 @@
 - **PHP 7.4+** (recomendado 8.x)
 - Extensiones: `pdo_sqlite`, `zip`, `json`
 
-### Instalar PHP (si no lo tienes)
+---
+
+## Instalar PHP en Windows (paso a paso)
+
+Tienes dos opciones: **PHP directo** (ligero) o **XAMPP** (más fácil si nunca has usado PHP).
+
+### Opción A — PHP directo (recomendada)
+
+#### 1. Descargar PHP
+
+1. Abre [https://windows.php.net/download/](https://windows.php.net/download/)
+2. En **PHP 8.3** o **8.4**, descarga el ZIP:
+   - **VS16 x64 Thread Safe** (ej. `php-8.3.x-Win32-vs16-x64.zip`)
+
+#### 2. Extraer en una carpeta
+
+1. Crea la carpeta `C:\php`
+2. Extrae ahí todo el contenido del ZIP
+
+#### 3. Configurar `php.ini`
+
+1. En `C:\php`, copia `php.ini-development` y renómbralo a **`php.ini`**
+2. Abre `php.ini` con el Bloc de notas
+3. Busca y **descomenta** (quita el `;` del inicio) estas líneas:
+
+```ini
+extension_dir = "ext"
+
+extension=curl
+extension=mbstring
+extension=openssl
+extension=pdo_sqlite
+extension=sqlite3
+extension=zip
+```
+
+4. Guarda el archivo
+
+#### 4. Agregar PHP al PATH de Windows
+
+1. Presiona `Win + R`, escribe `sysdm.cpl` y Enter
+2. Pestaña **Opciones avanzadas** → **Variables de entorno**
+3. En **Variables del sistema**, selecciona **Path** → **Editar**
+4. **Nuevo** → escribe `C:\php` → Aceptar en todas las ventanas
+
+#### 5. Verificar instalación
+
+Abre **Símbolo del sistema** o **PowerShell** (nueva ventana) y ejecuta:
+
+```cmd
+php -v
+```
+
+Debe mostrar la versión de PHP. Si dice "no se reconoce", cierra y abre de nuevo la terminal o reinicia el PC.
+
+#### 6. Iniciar la aplicación
+
+```cmd
+cd C:\ruta\a\tu\proyecto
+scripts\serve-local.bat
+```
+
+O manualmente:
+
+```cmd
+cd C:\ruta\a\tu\proyecto
+php -S localhost:8080 -t .
+```
+
+Abre el navegador en: **http://localhost:8080**
+
+---
+
+### Opción B — XAMPP (más simple)
+
+1. Descarga XAMPP desde [https://www.apachefriends.org/](https://www.apachefriends.org/)
+2. Instala con Apache y PHP marcados
+3. Copia la carpeta del proyecto a `C:\xampp\htdocs\artemisa`
+4. Abre XAMPP Control Panel → inicia **Apache**
+5. Visita: **http://localhost/artemisa/install.php**
+
+> Con XAMPP no necesitas `php -S`; Apache sirve los archivos directamente.
+
+---
+
+### Probar en el celular (Windows + misma WiFi)
+
+1. En CMD ejecuta `ipconfig` y anota tu **IPv4** (ej. `192.168.1.45`)
+2. En el celular abre: `http://192.168.1.45:8080/login.php`
+3. Si no conecta, en Windows Firewall permite el puerto **8080**:
+   - Panel de control → Firewall → Configuración avanzada → Reglas de entrada → Nueva regla → Puerto TCP 8080
+
+---
+
+## Linux / macOS
 
 **Ubuntu / Debian:**
 ```bash
@@ -18,25 +112,13 @@ sudo apt install php php-sqlite3 php-zip
 brew install php
 ```
 
-**Windows:**
-Descarga PHP desde [https://windows.php.net/download/](https://windows.php.net/download/) o usa XAMPP/WAMP.
-
-## Iniciar el servidor
-
-Desde la carpeta del proyecto:
-
+**Iniciar servidor:**
 ```bash
 chmod +x scripts/serve-local.sh
 ./scripts/serve-local.sh
 ```
 
-O manualmente:
-
-```bash
-php -S localhost:8080 -t .
-```
-
-Abre en el navegador: **http://localhost:8080**
+---
 
 ## Pasos de prueba
 
@@ -54,47 +136,36 @@ Abre en el navegador: **http://localhost:8080**
 1. En `http://localhost:8080/index.php` elige productos
 2. En el carrito verás:
    - **Subtotal productos**
-   - **Propina 10%** (puedes activar/desactivar)
-   - **Total con propina**
-3. Envía la comanda (la impresión en local usará modo navegador si no hay Bluetooth)
+   - **Propina 10%** (marcada por defecto)
+   - **Otra propina (CLP)** — campo manual para otro monto
+3. Si escribes un monto manual, se desmarca el 10% y se usa tu valor
+4. Si vuelves a marcar el 10%, se borra el campo manual
+5. Envía la comanda
 
-### 4. Probar en el celular (misma red WiFi)
-
-1. Obtén la IP de tu PC:
-   - Linux/macOS: `hostname -I` o `ipconfig getifaddr en0`
-   - Windows: `ipconfig`
-2. En el celular abre: `http://TU_IP:8080/login.php`
-3. Asegúrate de que el firewall permita el puerto 8080
-
-> Web Bluetooth para impresora solo funciona con **HTTPS** en producción, o en `localhost` en algunos casos.
-
-### 5. Reporte de ventas
+### 4. Reporte de ventas
 1. Entra a `http://localhost:8080/admin/`
-2. Sección **Reporte de ventas del día**
-3. **Ver resumen** — muestra productos, propinas y total
-4. **Descargar Excel (CSV)** — archivo compatible con Excel
-5. **Enviar por correo** — intenta enviar a `richardrojas.cid@gmail.com`
+2. **Ver resumen** / **Descargar CSV** / **Enviar por correo**
+3. En local el correo suele guardarse en `data/reports/`
 
-> En local, `mail()` suele fallar. El reporte se guarda automáticamente en `data/reports/` como respaldo.
-
-### 6. Simular ventas para el reporte
-
-Haz 2-3 pedidos desde la app del mesero con propina activada, luego genera el reporte en admin.
+---
 
 ## Producción en Hostgator
 
 1. Sube archivos a `public_html`
 2. Activa SSL (HTTPS)
-3. Edita `includes/config.php` → `MAIL_FROM` con un correo de tu dominio (ej. `no-reply@tudominio.com`)
+3. Edita `includes/config.php` → `MAIL_FROM` con correo de tu dominio
 4. En admin configura el correo de reportes
-5. Opcional: cron diario con `scripts/send-daily-report.php`
+5. Opcional: cron con `scripts/send-daily-report.php`
 
-## Solución de problemas
+---
+
+## Solución de problemas (Windows)
 
 | Problema | Solución |
 |----------|----------|
-| `php: command not found` | Instala PHP (ver arriba) |
-| Error permisos `/data` | `chmod 775 data` |
+| `php no se reconoce` | Agrega `C:\php` al PATH y abre nueva terminal |
+| Error `could not find driver` | Habilita `extension=pdo_sqlite` en `php.ini` |
+| Error al generar ODT | Habilita `extension=zip` en `php.ini` |
+| No abre desde el celular | Revisa firewall y que PC y celular estén en la misma WiFi |
+| Carpeta `data` sin permisos | Clic derecho en `data` → Propiedades → quitar solo lectura |
 | Correo no llega en local | Normal; revisa `data/reports/` |
-| Correo no llega en Hostgator | Configura `MAIL_FROM` con dominio válido en cPanel |
-| Sesión expirada en API | Vuelve a `login.php` |

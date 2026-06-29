@@ -25,7 +25,8 @@
         cartTotal: $('#cartTotal'),
         cartSubtotal: $('#cartSubtotal'),
         cartTip: $('#cartTip'),
-        includeTip: $('#includeTip'),
+        usePercentTip: $('#usePercentTip'),
+        manualTip: $('#manualTip'),
         tipPercentLabel: $('#tipPercentLabel'),
         cartTotalPreview: $('#cartTotalPreview'),
         cartItems: $('#cartItems'),
@@ -95,8 +96,21 @@
     }
 
     function getCartTip() {
-        if (!els.includeTip?.checked) return 0;
-        return Math.round(getCartSubtotal() * (tipPercent / 100));
+        const manualRaw = els.manualTip?.value.trim() ?? '';
+        if (manualRaw !== '') {
+            return Math.max(0, parseInt(manualRaw, 10) || 0);
+        }
+        if (els.usePercentTip?.checked) {
+            return Math.round(getCartSubtotal() * (tipPercent / 100));
+        }
+        return 0;
+    }
+
+    function getTipMode() {
+        const manualRaw = els.manualTip?.value.trim() ?? '';
+        if (manualRaw !== '') return 'manual';
+        if (els.usePercentTip?.checked) return 'percent';
+        return 'none';
     }
 
     function getCartTotal() {
@@ -475,7 +489,8 @@
         const payload = {
             table_number: els.tableNumber.value.trim() || null,
             waiter_name: els.waiterName.value.trim() || null,
-            include_tip: els.includeTip.checked,
+            tip_mode: getTipMode(),
+            tip_amount: getCartTip(),
             tip_percent: tipPercent,
             items: cart.map(item => ({
                 menu_item_id: item.menu_item_id,
@@ -611,7 +626,19 @@
         });
         els.itemQuantity.addEventListener('input', updateModalTotal);
 
-        els.includeTip?.addEventListener('change', renderCart);
+        els.usePercentTip?.addEventListener('change', () => {
+            if (els.usePercentTip.checked) {
+                els.manualTip.value = '';
+            }
+            renderCart();
+        });
+
+        els.manualTip?.addEventListener('input', () => {
+            if (els.manualTip.value.trim() !== '') {
+                els.usePercentTip.checked = false;
+            }
+            renderCart();
+        });
 
         els.itemForm.addEventListener('submit', (e) => {
             e.preventDefault();

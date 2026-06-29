@@ -346,6 +346,30 @@ body {
     cursor: pointer;
 }
 
+.tip-manual-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding-top: 0;
+}
+
+.tip-manual-row label {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
+.tip-manual-row input {
+    width: 110px;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    font-size: 1rem;
+    text-align: right;
+}
+
 .tip-label input {
     width: 18px;
     height: 18px;

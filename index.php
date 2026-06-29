@@ -74,11 +74,16 @@ $cafeName = $settings->getCafeName();
                     <span id="cartSubtotal">$0</span>
                 </div>
                 <div class="summary-row tip-row">
-                    <label class="tip-label">
-                        <input type="checkbox" id="includeTip" checked>
+                    <label class="tip-label" for="usePercentTip">
+                        <input type="checkbox" id="usePercentTip" checked>
                         Propina <span id="tipPercentLabel">10</span>%
                     </label>
                     <span id="cartTip">$0</span>
+                </div>
+                <div class="summary-row tip-manual-row">
+                    <label for="manualTip">Otra propina (CLP)</label>
+                    <input type="number" id="manualTip" min="0" step="1" inputmode="numeric"
+                           placeholder="Ej: 1500" aria-label="Monto de propina manual">
                 </div>
                 <div class="summary-row total-row">
                     <span>Total con propina</span>

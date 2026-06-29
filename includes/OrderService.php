@@ -30,9 +30,18 @@ class OrderService
             $subtotal += $processed['line_total'];
         }
 
-        $includeTip = !isset($payload['include_tip']) || !empty($payload['include_tip']);
+        $tipMode = $payload['tip_mode'] ?? 'percent';
         $tipPercent = (float) ($payload['tip_percent'] ?? $this->settings->getTipPercent());
-        $tipAmount = $includeTip ? round($subtotal * ($tipPercent / 100)) : 0.0;
+
+        if ($tipMode === 'manual') {
+            $tipAmount = max(0, round((float) ($payload['tip_amount'] ?? 0)));
+        } elseif ($tipMode === 'percent') {
+            $tipAmount = round($subtotal * ($tipPercent / 100));
+        } else {
+            $tipAmount = 0;
+        }
+
+        $includeTip = $tipAmount > 0;
         $total = $subtotal + $tipAmount;
 
         $this->db->beginTransaction();
@@ -80,8 +89,9 @@ class OrderService
                 'table_number' => $payload['table_number'] ?? null,
                 'waiter_name' => $payload['waiter_name'] ?? null,
                 'subtotal' => $subtotal,
-                'tip_percent' => $tipPercent,
+                'tip_percent' => $tipMode === 'percent' ? $tipPercent : null,
                 'tip_amount' => $tipAmount,
+                'tip_mode' => $tipMode,
                 'include_tip' => $includeTip,
                 'total' => $total,
                 'items' => $processedItems,

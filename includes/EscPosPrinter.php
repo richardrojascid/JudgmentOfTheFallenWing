@@ -81,8 +81,11 @@ class EscPosPrinter
         $out .= self::text('Subtotal productos: ' . self::formatCLP($subtotal) . "\n");
 
         if ($tipAmount > 0) {
-            $tipPercent = (int) round($subtotal > 0 ? ($tipAmount / $subtotal) * 100 : 10);
-            $out .= self::text("Propina {$tipPercent}%: " . self::formatCLP($tipAmount) . "\n");
+            $tipPercent = (float) ($order['tip_percent'] ?? ($subtotal > 0 ? ($tipAmount / $subtotal) * 100 : 10));
+            $tipLabel = ($order['tip_mode'] ?? '') === 'manual'
+                ? 'Propina'
+                : 'Propina ' . (int) round($tipPercent) . '%';
+            $out .= self::text("{$tipLabel}: " . self::formatCLP($tipAmount) . "\n");
         }
 
         $out .= self::bold(true);
