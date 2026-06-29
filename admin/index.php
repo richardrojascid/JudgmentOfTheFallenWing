@@ -70,6 +70,36 @@ $cafeName = $settings->getCafeName();
         </section>
 
         <section class="admin-section">
+            <h2>Reporte de ventas del día</h2>
+            <form id="reportSettingsForm" class="admin-form">
+                <div class="form-group">
+                    <label for="reportEmail">Correo para reportes</label>
+                    <input type="email" id="reportEmail" value="<?= htmlspecialchars($settings->getReportEmail()) ?>" required>
+                </div>
+                <div class="form-group">
+                    <label for="tipPercentSetting">Propina por defecto (%)</label>
+                    <input type="number" id="tipPercentSetting" value="<?= htmlspecialchars((string) $settings->getTipPercent()) ?>" min="0" max="100" step="1">
+                </div>
+                <button type="submit" class="btn btn-secondary">Guardar configuración</button>
+            </form>
+
+            <div class="form-row" style="margin-top:16px">
+                <div class="form-group">
+                    <label for="reportDate">Fecha del reporte</label>
+                    <input type="date" id="reportDate" value="<?= date('Y-m-d') ?>">
+                </div>
+            </div>
+
+            <div class="admin-report-actions">
+                <button type="button" class="btn btn-secondary" id="btnPreviewReport">Ver resumen</button>
+                <a href="#" class="btn btn-secondary" id="btnDownloadCsv">Descargar Excel (CSV)</a>
+                <button type="button" class="btn btn-primary" id="btnSendReport">Enviar por correo</button>
+            </div>
+
+            <div id="reportPreview" class="report-preview" hidden></div>
+        </section>
+
+        <section class="admin-section">
             <div class="section-header">
                 <h2>Categorías y productos</h2>
                 <button type="button" class="btn btn-primary btn-sm" id="btnNewCategory">+ Categoría</button>

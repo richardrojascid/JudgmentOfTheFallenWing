@@ -331,6 +331,25 @@ body {
     display: flex;
     justify-content: space-between;
     font-size: 1rem;
+    padding: 4px 0;
+}
+
+.tip-row {
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+}
+
+.tip-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.tip-label input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
 }
 
 .total-row {
@@ -754,8 +773,15 @@ body {
 
 .login-brand h1 {
     margin: 0 0 4px;
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     color: var(--color-accent);
+}
+
+.login-logo {
+    display: block;
+    margin: 0 auto 12px;
+    max-width: 220px;
+    height: auto;
 }
 
 .login-brand p {
@@ -982,5 +1008,43 @@ body {
     .form-row {
         grid-template-columns: 1fr;
     }
+}
+
+.admin-report-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.report-preview {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--color-surface-2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+}
+
+.report-preview h3 {
+    margin: 0 0 12px;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.875rem;
+}
+
+.report-table th,
+.report-table td {
+    padding: 8px;
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+}
+
+.report-table th:last-child,
+.report-table td:last-child {
+    text-align: right;
 }
 

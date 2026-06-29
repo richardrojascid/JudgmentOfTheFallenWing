@@ -37,6 +37,8 @@ try {
                 'success' => true,
                 'categories' => $menu->getFullMenu(true),
                 'cafe_name' => $settings->getCafeName(),
+                'report_email' => $settings->getReportEmail(),
+                'tip_percent' => $settings->getTipPercent(),
             ], JSON_UNESCAPED_UNICODE);
             break;
 
@@ -85,6 +87,20 @@ try {
         case 'reseed_menu':
             Database::reseedMenu();
             echo json_encode(['success' => true, 'message' => 'Carta Artemisa 2026 restaurada.']);
+            break;
+
+        case 'save_report_settings':
+            $email = trim($input['report_email'] ?? '');
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new InvalidArgumentException('Correo de reportes inválido.');
+            }
+            $tipPercent = (float) ($input['tip_percent'] ?? TIP_PERCENT_DEFAULT);
+            if ($tipPercent < 0 || $tipPercent > 100) {
+                throw new InvalidArgumentException('La propina debe estar entre 0 y 100%.');
+            }
+            $settings->set('report_email', $email);
+            $settings->set('tip_percent', (string) $tipPercent);
+            echo json_encode(['success' => true]);
             break;
 
         default:

@@ -5,11 +5,13 @@ class OrderService
 {
     private PDO $db;
     private MenuRepository $menu;
+    private Settings $settings;
 
-    public function __construct(PDO $db, MenuRepository $menu)
+    public function __construct(PDO $db, MenuRepository $menu, ?Settings $settings = null)
     {
         $this->db = $db;
         $this->menu = $menu;
+        $this->settings = $settings ?? new Settings($db);
     }
 
     public function createOrder(array $payload): array
@@ -20,25 +22,32 @@ class OrderService
         }
 
         $processedItems = [];
-        $total = 0.0;
+        $subtotal = 0.0;
 
         foreach ($items as $cartItem) {
             $processed = $this->processCartItem($cartItem);
             $processedItems[] = $processed;
-            $total += $processed['line_total'];
+            $subtotal += $processed['line_total'];
         }
+
+        $includeTip = !isset($payload['include_tip']) || !empty($payload['include_tip']);
+        $tipPercent = (float) ($payload['tip_percent'] ?? $this->settings->getTipPercent());
+        $tipAmount = $includeTip ? round($subtotal * ($tipPercent / 100)) : 0.0;
+        $total = $subtotal + $tipAmount;
 
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare("
-                INSERT INTO orders (table_number, waiter_name, subtotal, total, status, created_at)
-                VALUES (?, ?, ?, ?, 'pending', ?)
+                INSERT INTO orders (table_number, waiter_name, subtotal, tip_amount, total, include_tip, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)
             ");
             $stmt->execute([
                 $payload['table_number'] ?? null,
                 $payload['waiter_name'] ?? null,
+                $subtotal,
+                $tipAmount,
                 $total,
-                $total,
+                $includeTip ? 1 : 0,
                 date('Y-m-d H:i:s'),
             ]);
             $orderId = (int) $this->db->lastInsertId();
@@ -70,7 +79,10 @@ class OrderService
                 'id' => $orderId,
                 'table_number' => $payload['table_number'] ?? null,
                 'waiter_name' => $payload['waiter_name'] ?? null,
-                'subtotal' => $total,
+                'subtotal' => $subtotal,
+                'tip_percent' => $tipPercent,
+                'tip_amount' => $tipAmount,
+                'include_tip' => $includeTip,
                 'total' => $total,
                 'items' => $processedItems,
                 'created_at' => date('Y-m-d H:i:s'),
@@ -103,7 +115,10 @@ class OrderService
         }
 
         $order['items'] = $items;
+        $order['subtotal'] = (float) $order['subtotal'];
+        $order['tip_amount'] = (float) ($order['tip_amount'] ?? 0);
         $order['total'] = (float) $order['total'];
+        $order['include_tip'] = !empty($order['include_tip']);
         return $order;
     }
 

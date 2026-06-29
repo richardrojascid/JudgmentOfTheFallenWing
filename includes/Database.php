@@ -105,6 +105,8 @@ class Database
         $settings = new Settings(self::getConnection());
         $settings->set('cafe_name', APP_NAME);
         $settings->setPin($pin);
+        $settings->set('report_email', REPORT_EMAIL_DEFAULT);
+        $settings->set('tip_percent', (string) TIP_PERCENT_DEFAULT);
     }
 
     public static function reseedMenu(): void
@@ -118,6 +120,15 @@ class Database
         $columnNames = array_column($columns, 'name');
         if (!in_array('price_double', $columnNames, true)) {
             $db->exec('ALTER TABLE menu_items ADD COLUMN price_double REAL');
+        }
+
+        $orderColumns = $db->query('PRAGMA table_info(orders)')->fetchAll();
+        $orderColumnNames = array_column($orderColumns, 'name');
+        if (!in_array('tip_amount', $orderColumnNames, true)) {
+            $db->exec('ALTER TABLE orders ADD COLUMN tip_amount REAL NOT NULL DEFAULT 0');
+        }
+        if (!in_array('include_tip', $orderColumnNames, true)) {
+            $db->exec('ALTER TABLE orders ADD COLUMN include_tip INTEGER NOT NULL DEFAULT 1');
         }
     }
 }

@@ -24,6 +24,7 @@ try {
     echo json_encode([
         'success' => true,
         'app' => $settings->getCafeName(),
+        'tip_percent' => $settings->getTipPercent(),
         'categories' => $menu->getFullMenu(),
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {

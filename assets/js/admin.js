@@ -49,6 +49,14 @@
         if (data.cafe_name) {
             $('#adminCafeName').value = data.cafe_name;
         }
+        if (data.report_email) {
+            const el = $('#reportEmail');
+            if (el) el.value = data.report_email;
+        }
+        if (data.tip_percent != null) {
+            const el = $('#tipPercentSetting');
+            if (el) el.value = data.tip_percent;
+        }
         renderMenu();
     }
 
@@ -155,8 +163,8 @@
             .map(line => line.trim())
             .filter(Boolean)
             .map(line => {
-                const removable = !line.startsWith('-');
-                const name = removable ? line : line.replace(/^-\s*/, '');
+                const removable = line.startsWith('-');
+                const name = removable ? line.replace(/^-\s*/, '') : line;
                 return { name, removable: removable ? 1 : 0 };
             });
     }
@@ -253,6 +261,64 @@
             showToast('Carta 2026 restaurada');
             loadMenu();
         });
+
+        $('#reportSettingsForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await api('save_report_settings', {
+                report_email: $('#reportEmail').value.trim(),
+                tip_percent: parseFloat($('#tipPercentSetting').value) || 10,
+            });
+            showToast('Configuración de reportes guardada');
+        });
+
+        $('#btnPreviewReport')?.addEventListener('click', previewReport);
+        $('#btnSendReport')?.addEventListener('click', sendReport);
+        $('#btnDownloadCsv')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            const date = $('#reportDate').value || new Date().toISOString().slice(0, 10);
+            window.location.href = `../api/report.php?format=csv&date=${encodeURIComponent(date)}`;
+        });
+    }
+
+    async function reportApi(action, data = {}) {
+        const res = await fetch('../api/report.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, ...data }),
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || 'Error en reporte');
+        return json;
+    }
+
+    async function previewReport() {
+        const date = $('#reportDate').value;
+        const data = await reportApi('preview', { date });
+        const r = data.report;
+        const preview = $('#reportPreview');
+        preview.hidden = false;
+        preview.innerHTML = `
+            <h3>Resumen ${r.date}</h3>
+            <p>Pedidos: <strong>${r.orders_count}</strong></p>
+            <table class="report-table">
+                <thead><tr><th>Producto</th><th>Cant.</th><th>Monto</th></tr></thead>
+                <tbody>
+                    ${r.products.map(p => `<tr><td>${escapeHtml(p.item_name)}</td><td>${p.total_qty}</td><td>${formatMoney(p.total_amount)}</td></tr>`).join('')}
+                </tbody>
+            </table>
+            <p>Subtotal productos: <strong>${formatMoney(r.subtotal_products)}</strong></p>
+            <p>Propinas: <strong>${formatMoney(r.total_tips)}</strong></p>
+            <p>Total del día: <strong>${formatMoney(r.grand_total)}</strong></p>
+        `;
+    }
+
+    async function sendReport() {
+        const date = $('#reportDate').value;
+        const email = $('#reportEmail').value.trim();
+        if (!confirm(`¿Enviar reporte del ${date} a ${email}?`)) return;
+        const data = await reportApi('send_email', { date, email });
+        showToast(data.message, data.email_sent ? 'success' : 'error');
     }
 
     bindModals();

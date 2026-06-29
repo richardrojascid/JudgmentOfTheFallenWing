@@ -68,6 +68,15 @@ Accede a `https://tudominio.com/admin/` (requiere PIN):
 └── assets/                # CSS y JS responsivos
 ```
 
+## Probar en local
+
+Consulta la guía completa: **[PRUEBA-LOCAL.md](PRUEBA-LOCAL.md)**
+
+```bash
+./scripts/serve-local.sh
+# Abre http://localhost:8080/install.php
+```
+
 ## Licencia
 
 MIT

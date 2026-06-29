@@ -57,4 +57,14 @@ class Settings
     {
         return $this->get('cafe_name', APP_NAME) ?? APP_NAME;
     }
+
+    public function getReportEmail(): string
+    {
+        return $this->get('report_email', REPORT_EMAIL_DEFAULT) ?? REPORT_EMAIL_DEFAULT;
+    }
+
+    public function getTipPercent(): float
+    {
+        return (float) ($this->get('tip_percent', (string) TIP_PERCENT_DEFAULT) ?? TIP_PERCENT_DEFAULT);
+    }
 }

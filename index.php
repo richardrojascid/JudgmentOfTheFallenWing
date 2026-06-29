@@ -69,8 +69,19 @@ $cafeName = $settings->getCafeName();
             </div>
             <ul class="cart-items" id="cartItems"></ul>
             <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Subtotal productos</span>
+                    <span id="cartSubtotal">$0</span>
+                </div>
+                <div class="summary-row tip-row">
+                    <label class="tip-label">
+                        <input type="checkbox" id="includeTip" checked>
+                        Propina <span id="tipPercentLabel">10</span>%
+                    </label>
+                    <span id="cartTip">$0</span>
+                </div>
                 <div class="summary-row total-row">
-                    <span>Total</span>
+                    <span>Total con propina</span>
                     <span id="cartTotal">$0</span>
                 </div>
             </div>
@@ -163,6 +174,7 @@ $cafeName = $settings->getCafeName();
 
     <script>
         window.APP_CAFE_NAME = <?= json_encode($cafeName, JSON_UNESCAPED_UNICODE) ?>;
+        window.APP_TIP_PERCENT = <?= json_encode($settings->getTipPercent()) ?>;
     </script>
     <script src="assets/js/printer.js"></script>
     <script src="assets/js/app.js"></script>

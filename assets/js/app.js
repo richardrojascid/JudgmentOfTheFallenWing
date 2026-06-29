@@ -11,6 +11,7 @@
     let editingCartIndex = -1;
     let selectedCategoryId = null;
     let selectedSize = 'simple';
+    let tipPercent = window.APP_TIP_PERCENT || 10;
 
     const $ = (sel) => document.querySelector(sel);
 
@@ -22,6 +23,10 @@
         cartContent: $('#cartContent'),
         cartCount: $('#cartCount'),
         cartTotal: $('#cartTotal'),
+        cartSubtotal: $('#cartSubtotal'),
+        cartTip: $('#cartTip'),
+        includeTip: $('#includeTip'),
+        tipPercentLabel: $('#tipPercentLabel'),
         cartTotalPreview: $('#cartTotalPreview'),
         cartItems: $('#cartItems'),
         closeCart: $('#closeCart'),
@@ -85,8 +90,17 @@
         return '$' + Math.round(Number(amount)).toLocaleString('es-CL');
     }
 
-    function getCartTotal() {
+    function getCartSubtotal() {
         return cart.reduce((sum, item) => sum + item.line_total, 0);
+    }
+
+    function getCartTip() {
+        if (!els.includeTip?.checked) return 0;
+        return Math.round(getCartSubtotal() * (tipPercent / 100));
+    }
+
+    function getCartTotal() {
+        return getCartSubtotal() + getCartTip();
     }
 
     function getCartCount() {
@@ -143,6 +157,10 @@
             }
 
             menu = data.categories;
+            if (data.tip_percent) {
+                tipPercent = data.tip_percent;
+                if (els.tipPercentLabel) els.tipPercentLabel.textContent = tipPercent;
+            }
             renderCategoryTabs();
             if (menu.length > 0) {
                 selectedCategoryId = menu[0].id;
@@ -389,9 +407,13 @@
 
     function renderCart() {
         const count = getCartCount();
+        const subtotal = getCartSubtotal();
+        const tip = getCartTip();
         const total = getCartTotal();
 
         els.cartCount.textContent = count;
+        els.cartSubtotal.textContent = formatMoney(subtotal);
+        els.cartTip.textContent = formatMoney(tip);
         els.cartTotal.textContent = formatMoney(total);
         els.cartTotalPreview.textContent = formatMoney(total);
         els.btnSendOrder.disabled = count === 0;
@@ -453,6 +475,8 @@
         const payload = {
             table_number: els.tableNumber.value.trim() || null,
             waiter_name: els.waiterName.value.trim() || null,
+            include_tip: els.includeTip.checked,
+            tip_percent: tipPercent,
             items: cart.map(item => ({
                 menu_item_id: item.menu_item_id,
                 quantity: item.quantity,
@@ -586,6 +610,8 @@
             updateModalTotal();
         });
         els.itemQuantity.addEventListener('input', updateModalTotal);
+
+        els.includeTip?.addEventListener('change', renderCart);
 
         els.itemForm.addEventListener('submit', (e) => {
             e.preventDefault();

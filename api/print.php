@@ -137,6 +137,13 @@ function receiptToPlainText(array $order, array $items, string $cafeName): strin
     }
 
     $lines[] = str_repeat('-', 32);
+    $subtotal = (float) ($order['subtotal'] ?? $order['total'] ?? 0);
+    $tipAmount = (float) ($order['tip_amount'] ?? 0);
+    $lines[] = 'Subtotal productos: ' . formatCLP($subtotal);
+    if ($tipAmount > 0) {
+        $tipPercent = (int) round($subtotal > 0 ? ($tipAmount / $subtotal) * 100 : 10);
+        $lines[] = "Propina {$tipPercent}%: " . formatCLP($tipAmount);
+    }
     $lines[] = 'TOTAL: ' . formatCLP((float) ($order['total'] ?? 0));
     $lines[] = str_repeat('-', 32);
     $lines[] = 'Gracias por su preferencia';
