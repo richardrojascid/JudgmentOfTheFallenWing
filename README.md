@@ -1,12 +1,15 @@
 # Artemisa Salón de Té — Sistema de comandas para meseros
 
-**Repositorio:** https://github.com/richardrojascid/artemisa
+**Repositorio:** https://github.com/richardrojascid/artemisa  
+**Carpeta local (desarrollo):** `C:\Users\Richard Rojas\artemisa`
 
 Sistema de comandas para **Artemisa Salón de Té**: carta 2026, PIN, propina flexible, reportes por correo e impresión térmica. Compatible con Hostgator (PHP + SQLite + HTTPS).
 
+> Todo el trabajo nuevo va a **artemisa** (`main`). No usar el repositorio antiguo `JudgmentOfTheFallenWing`. Ver [DESARROLLO.md](DESARROLLO.md).
+
 ## Características
 
-- **Carta Artemisa 2026**: Cafés, tés, saladas, pastelería, heladas y bebidas frías
+- **Carta Artemisa 2026**: Cafés, tés, salados, pastelería, helados y bebidas frías
 - **Precios simple/doble** para cafés (como en la carta impresa)
 - **Agregados y opciones**: leche vegetal, tetera, variantes de té, toppings, etc.
 - **Acceso con PIN** para personal autorizado
