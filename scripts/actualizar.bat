@@ -34,7 +34,7 @@ if errorlevel 1 (
     git remote add export https://github.com/richardrojascid/JudgmentOfTheFallenWing.git
 )
 
-echo Descargando cambios (rama artemisa)...
+echo Descargando cambios (rama artemisa de JudgmentOfTheFallenWing)...
 git fetch export artemisa
 if errorlevel 1 (
     echo Error al hacer fetch. Revisa internet y acceso a GitHub.
@@ -72,7 +72,12 @@ if errorlevel 1 (
 )
 
 echo.
-echo Siguiente paso - iniciar servidor DESDE ESTA CARPETA:
+echo Para subir estos cambios a github.com/richardrojascid/artemisa ejecuta:
+echo   scripts\importar-a-artemisa.bat
+echo.
+echo Ver codigo en GitHub ^(rama main^):
+echo   https://github.com/richardrojascid/artemisa/tree/main
+echo.
 echo   scripts\serve-local.bat
 echo.
 echo Luego abre:

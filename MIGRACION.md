@@ -1,10 +1,18 @@
 # Artemisa — publicar código en GitHub
 
-Repositorio oficial: **https://github.com/richardrojascid/artemisa**
+Repositorio oficial: **https://github.com/richardrojascid/artemisa** (rama **`main`**)
 
-El código completo está en la rama exportada:
+El agente de Cursor sube primero a:
 
-**https://github.com/richardrojascid/JudgmentOfTheFallenWing/tree/artemisa**
+**https://github.com/richardrojascid/JudgmentOfTheFallenWing** → rama **`artemisa`**
+
+Luego **tú** importas a `artemisa` con:
+
+```cmd
+scripts\importar-a-artemisa.bat
+```
+
+Guía completa: **[SINCRONIZAR-GITHUB.md](SINCRONIZAR-GITHUB.md)**
 
 ---
 
